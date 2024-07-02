@@ -68,7 +68,7 @@ def data_translation(raw_df, translation_df, start_time):
         for df_col in raw_df.columns:
             iterate = iterate+1
             unique_elements = translation_df[df_col].unique() # getting the unique values in the dictionary spreadsheet for the chosen column
-            print("\r"+str(round(time.time() - start_time, ndigits=0))+"s: Translating Column >> " + str(iterate)+"/"+str(no_of_columns),end=' ')
+            st.text("\r"+str(round(time.time() - start_time, ndigits=0))+"s: Translating Column >> " + str(iterate)+"/"+str(no_of_columns),end=' ')
             # replacing the values of columns that are float or int
             if str(raw_df[df_col].dtype) == "float64" or str(raw_df[df_col].dtype) == "int64":
                 if len(unique_elements) > 1:
@@ -78,40 +78,40 @@ def data_translation(raw_df, translation_df, start_time):
                         else:
                             pass
                 else:
-                    # print("No data to translate")
+                    # st.text("No data to translate")
                     pass
 
             # replacing the values of columns that are not float or int and considered to be object type
             else:
-                # print(df_col, raw_df[df_col].dtype)
-                # print(df_col)
+                # st.text(df_col, raw_df[df_col].dtype)
+                # st.text(df_col)
                 if len(unique_elements) > 1:
                     for i in range(len(raw_df[df_col])):
                         if len(str(raw_df[df_col][i])) > 1:
                             if str(raw_df[df_col][i]) != "00":
                                 try:
-                                    # print(len((raw_df[df_col][i])))
+                                    # st.text(len((raw_df[df_col][i])))
                                     raw_df.loc[i, df_col] = translation_df[df_col][index_values_str.index(str(raw_df[df_col][i]).lstrip("0"))]
                                 except Exception as err:
-                                    # print("hi")
+                                    # st.text("hi")
                                     pass
                             else:
                                 try:
-                                    # print(len((raw_df[df_col][i])))
+                                    # st.text(len((raw_df[df_col][i])))
                                     raw_df.loc[i, df_col] = translation_df[df_col][index_values_str.index(str(0))]
                                 except Exception as err:
-                                    # print("hi")
+                                    # st.text("hi")
                                     pass
                         else:
                             try:
-                                # print(len((raw_df[df_col][i])))
+                                # st.text(len((raw_df[df_col][i])))
                                 raw_df.loc[i, df_col] = translation_df[df_col][index_values_str.index(str(raw_df[df_col][i]))]
                             except Exception as err:
-                                # print("hi")
+                                # st.text("hi")
                                 pass
                 else:
                     pass
-                    # print("No data to translate")
+                    # st.text("No data to translate")
 
         raw_df["Latitude Degrees"] = pd.to_numeric(raw_df['Latitude Degrees'], errors='coerce').astype(float)
         raw_df["Latitude Minutes"] = pd.to_numeric(raw_df['Latitude Minutes'], errors='coerce').astype(float)
@@ -129,7 +129,7 @@ def data_translation(raw_df, translation_df, start_time):
 
     except Exception as err:
         logging.error(err)
-        print(err)
+        st.text(err)
         sys.exit(1)
 
 
@@ -157,7 +157,7 @@ def participant_vehicle_id(raw_df, veh_code):
         # raw_df.to_csv(path_dir + "Translated_Data.csv", index=False)
         return raw_df
     except Exception as err:
-        # print(err)
+        # st.text(err)
         logging.error(err)
         sys.exit(1)
 
@@ -927,19 +927,19 @@ def pivot_data(raw_df, path_out, output_filename1, output_filename2):
         # reorder the levels
         raw_df=raw_df.reorder_levels([1,0],axis=1)
         reorder_cols=[]
-        # print(raw_df.columns)
+        # st.text(raw_df.columns)
         # gathering all columns with the keyword  Record Type
         for i in range (len(raw_df.columns)):
             if raw_df.columns[i][1] == "Record Type":
                 reorder_cols.append(raw_df.columns[i][0])
-        # print(reorder_cols)
+        # st.text(reorder_cols)
         new_cols=raw_df.columns.reindex(reorder_cols,level=0)
-        # print(new_cols)
+        # st.text(new_cols)
         raw_df=raw_df.reindex(columns=new_cols[0])
         # # ---------------------
-        # print(len(raw_df.columns))
+        # st.text(len(raw_df.columns))
         raw_df.dropna(how='all', axis=1, inplace=True)
-        # print(len(raw_df.columns))
+        # st.text(len(raw_df.columns))
         raw_df.columns = raw_df.columns.map('|'.join).str.strip('|')  # merging the column headers
         raw_df.reset_index(inplace=True)
         raw_df = raw_df.rename(columns={'index': 'ID'})
@@ -1039,7 +1039,7 @@ def excel_table_export(df, df_pivot, output_dir, op_file_name):
                     col_name_df.to_excel(writer, sheet_name='COI', index=False)
                     writer.save()
                 except:
-                    # print("Worksheet(s) does not exist, check log file for next steps. However output file will be created....")
+                    # st.text("Worksheet(s) does not exist, check log file for next steps. However output file will be created....")
                     logging.info("There may be a duplicate in one or more Input tabs, delete the old tab(s) and rename the new one, to the same name as the old tab. However output file will be created....")
 
         else:
@@ -1047,7 +1047,7 @@ def excel_table_export(df, df_pivot, output_dir, op_file_name):
             sys.exit(1)
 
     except Exception as err:
-        print(err)
+        st.text(err)
         logging.error(err)
         sys.exit(1)
 
@@ -1055,7 +1055,7 @@ def excel_table_export(df, df_pivot, output_dir, op_file_name):
 # Main
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG, filename="Log.log", filemode='a')
-    print(" _  ___ _   _       _                                                        _       _                _____\n"              
+    st.text(" _  ___ _   _       _                                                        _       _                _____\n"              
              "| |/ (_) | | |     | |                   ___        /\                      (_)     | |              |_   _|\n"
              "| ' / _| |_| |_ ___| |___  ___  _ __    ( _ )      /  \   ___ ___  ___   ___ _  __ _| |_ ___  ___      | |  _ __   ___\n"
              "|  < | | __| __/ _ \ / __|/ _ \| '_ \   / _ \/\   / /\ \ / __/ __|/ _ \ / __| |/ _` | __/ _ \/ __|     | | | '_ \ / __|\n"
@@ -1067,12 +1067,12 @@ if __name__ == '__main__':
             " _| |_| | | | | | | (_) \ V / (_| | |_| | (_) | | | | | . \| | || (__| | | |  __/ | | |\n"
             "|_____|_| |_|_| |_|\___/ \_/ \__,_|\__|_|\___/|_| |_| |_|\_\_|\__\___|_| |_|\___|_| |_|\n")
 
-    print("Crash Recoder Tool, an Innovation Kitchen Product developed by Kittelson and Associates, Inc. (KAI)")
-    print("Contact: Azhagan (Azy) Avr - aavr@kittelson.com")
+    st.text("Crash Recoder Tool, an Innovation Kitchen Product developed by Kittelson and Associates, Inc. (KAI)")
+    st.text("Contact: Azhagan (Azy) Avr - aavr@kittelson.com")
     logging.info("Crash Recoder Tool, an Innovation Kitchen Product developed by Kittelson and Associates, Inc. (KAI)")
     logging.info("Contact: Azhagan (Azy) Avr  - aavr@kittelson.com")
     logging.info(dt.datetime.now())
-    print()
+    st.text()
 
     """
     Forced i/p and o/p folders
@@ -1082,21 +1082,21 @@ if __name__ == '__main__':
         project_name = "Crash Recoder Tool - " + file_version
 
 
-        path_dir = diropenbox("Choose the input folder: ", project_name)
-        # path_dir = r"C:\Users\aavr\OneDrive - Kittelson & Associates, Inc\Desktop\Python Projects\Projects\Crash Recoder\Github backup\00-Input\29019\\"
+        # path_dir = diropenbox("Choose the input folder: ", project_name)
+        path_dir = r"D:\Kittelson\Scripts\Crash Recoder\Github backup\00-Input\27003-007\\"
         path_dir = path_dir + "\\"
 
-        path_out = diropenbox("Choose the output folder: ", project_name)
-        # path_out = r"C:\Users\aavr\OneDrive - Kittelson & Associates, Inc\Desktop\Python Projects\Projects\Crash Recoder\Github backup\01-Output\\"
+        # path_out = diropenbox("Choose the output folder: ", project_name)
+        path_out = r"D:\Kittelson\Scripts\Crash Recoder\Github backup\01-Output\\"
         path_out = path_out + "\\"
 
-        output_filename = enterbox("Please enter the output file name: ", project_name)
-        # output_filename = "faster_data_trans"
+        # output_filename = enterbox("Please enter the output file name: ", project_name)
+        output_filename = "streamlit"
 
         veh_code_seq = "0" # changing it to 0 as ODOT changed their format
 
-        file_format = enterbox("If input data is in '.txt' format enter 1, else enter 0", project_name)
-        # file_format = "1"
+        # file_format = enterbox("If input data is in '.txt' format enter 1, else enter 0", project_name)
+        file_format = "1"
 
         output_filename1 = output_filename + "_Collision.csv"
         output_filename2 = output_filename + "_Party.csv"
@@ -1107,20 +1107,20 @@ if __name__ == '__main__':
         sys.exit(1)
 
     start_time = time.time()
-    print(str(round(time.time() - start_time, ndigits=2))+"s"+": Combining multiple files.....")
+    st.text(str(round(time.time() - start_time, ndigits=2))+"s"+": Combining multiple files.....")
     logging.info(str(round(time.time() - start_time, ndigits=2))+"s"+": Combining multiple files.....")
     if file_format == "1":
         txt_file_merging(path_dir, combined_data_csv, "*.txt")
     else:
         txt_file_merging(path_dir, combined_data_csv, "*.csv")
 
-    print(str(round(time.time() - start_time, ndigits=2))+"s"+": Importing data translation table.....")
+    st.text(str(round(time.time() - start_time, ndigits=2))+"s"+": Importing data translation table.....")
     logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Importing data translation table.....")
     raw_data, translation_df = import_combined_translation_data(path_dir,combined_data_csv, data_traslation_xlsx)
     translated_df = data_translation(raw_data,translation_df, start_time)
 
-    print()
-    print(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating party level data.....")
+    st.text()
+    st.text(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating party level data.....")
     logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating party level data.....")
     pivot_col_id = participant_vehicle_id(translated_df, veh_code_seq)
 
@@ -1134,19 +1134,19 @@ if __name__ == '__main__':
     Generating multi line output too
     """
 
-    print(str(round(time.time() - start_time, ndigits=2))+"s"+": Creating new variables.....")
+    st.text(str(round(time.time() - start_time, ndigits=2))+"s"+": Creating new variables.....")
     logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating new variables.....")
     new_var_df = add_kai_variables(pivot_col_id)
     # new_var_df = pd.read_csv("ML_output_kai.csv", low_memory=False)
 
-    print(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating collision level data.....")
+    st.text(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating collision level data.....")
     logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating collision level data.....")
     pivot_df = pivot_data(new_var_df, path_out, output_filename1, output_filename2)
 
-    print(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Exporting data to visualizer.....")
+    st.text(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Exporting data to visualizer.....")
     logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Exporting data to visualizer.....")
     excel_table_export(new_var_df, pivot_df, path_out, output_filename3)
-    print()
+    st.text()
 
     # ....................................................................................................................
     try:
