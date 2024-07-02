@@ -20,6 +20,8 @@ import sys
 import shutil
 from easygui import *
 from tkinter import *
+import streamlit as st
+
 logging.getLogger('PIL').setLevel(logging.WARNING)
 
 
