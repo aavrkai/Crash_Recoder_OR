@@ -19,10 +19,6 @@ import datetime as dt
 import sys
 import shutil
 import streamlit as st
-import tkinter as tk
-from tkinter import simpledialog
-from easygui import *
-
 logging.getLogger('PIL').setLevel(logging.WARNING)
 
 
@@ -1053,20 +1049,20 @@ def excel_table_export(df, df_pivot, output_dir, op_file_name):
         logging.error(err)
         sys.exit(1)
 
-def get_output_filename(name):
-    root = tk.Tk()
-    root.withdraw()  # Hide the main window
-    filename = simpledialog.askstring(name, "Please enter the output file name:                                              \n\n")
-    root.destroy()  # Destroy the main window
-    return str(filename)
+# def get_output_filename(name):
+#     root = tk.Tk()
+#     root.withdraw()  # Hide the main window
+#     filename = simpledialog.askstring(name, "Please enter the output file name:                                              \n\n")
+#     root.destroy()  # Destroy the main window
+#     return str(filename)
 
-def get_file_format(name):
-    root = tk.Tk()
-    root.withdraw()  # Hide the main window
-    st.text("If input data is in '.txt' format enter 1, else enter 0 ...")
-    format = simpledialog.askstring(name, "If input data is in '.txt' format, please enter 1, else enter 0          \n\n")
-    root.destroy()  # Destroy the main window
-    return str(format)
+# def get_file_format(name):
+#     root = tk.Tk()
+#     root.withdraw()  # Hide the main window
+#     st.text("If input data is in '.txt' format enter 1, else enter 0 ...")
+#     format = simpledialog.askstring(name, "If input data is in '.txt' format, please enter 1, else enter 0          \n\n")
+#     root.destroy()  # Destroy the main window
+#     return str(format)
 
 # Main
 if __name__ == '__main__':
@@ -1082,28 +1078,28 @@ if __name__ == '__main__':
     try:
         project_name = "Crash Recoder Tool - " + file_version
         
-        st.text("Choose the input folder, where your input files are located ...")
-        time.sleep(1)
-        path_dir = diropenbox("Choose the input folder: ", project_name)
-        # path_dir = r"D:\Kittelson\Scripts\Crash Recoder\Github backup\00-Input\\29019"
+        # path_dir = st.text_input("Choose the input folder, where your input files are located ...")
+        # time.sleep(1)      
+        # path_dir = diropenbox("Choose the input folder: ", project_name)
+        path_dir = r"D:\Kittelson\Scripts\Crash Recoder\Github backup\00-Input\\29019"
         path_dir = path_dir + "\\"
         st.text(path_dir)
         
-        st.text("Choose the output folder (Note: Should not be same as the input folder) ...")
-        time.sleep(1)
-        path_out_ip = diropenbox("Choose the output folder: ", project_name)
-        # path_out_ip = r"D:\Kittelson\Scripts\Crash Recoder\Github backup\01-Output"
+        # st.text("Choose the output folder (Note: Should not be same as the input folder) ...")
+        # time.sleep(1)
+        # path_out_ip = diropenbox("Choose the output folder: ", project_name)
+        path_out_ip = r"D:\Kittelson\Scripts\Crash Recoder\Github backup\01-Output"
         path_out = path_out_ip + "\\"
         logging.info(str(path_out))
         st.text(path_out)
 
-        output_filename = get_output_filename(project_name)
-        # output_filename = "streamlit"
+        # output_filename = get_output_filename(project_name)
+        output_filename = "streamlit"
 
         veh_code_seq = "0" # changing it to 0 as ODOT changed their format
         
-        file_format = get_file_format(project_name)
-        # file_format = "1"
+        # file_format = get_file_format(project_name)
+        file_format = "1"
         
         output_filename1 = output_filename + "_Collision.csv"
         output_filename2 = output_filename + "_Party.csv"
