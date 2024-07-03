@@ -1073,7 +1073,7 @@ if __name__ == '__main__':
     file_version = "Version 4"  # Kindly update this value after every version update
 
     logging.basicConfig(level=logging.DEBUG, filename=r".\log\Log.log", filemode='a')
-    st.image(r'.\brandfolder\Banner.png')
+    # st.image(r'.\brandfolder\Banner.png')
     st.markdown(f"<div style='text-align: right;'>{file_version}</div>", unsafe_allow_html=True)  
     logging.info("Crash Recoder Tool, an Innovation Kitchen Product developed by Kittelson and Associates, Inc. (KAI)")
     logging.info("Contact: Azhagan (Azy) Avr  - aavr@kittelson.com")
