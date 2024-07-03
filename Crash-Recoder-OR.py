@@ -1,11 +1,11 @@
-"""
-Developed by Azhagan Avr (aavr@kittelson.com)
-V3 _v3
-including csv files as an input
-K49 February spelling changed
-Added Crash type in COI
-Updated visualizer spreadsheet (updated missing references,, added crash type in Road user refer Camilla email 04/13/2023)
-"""
+# """
+# Developed by Azhagan Avr (aavr@kittelson.com)
+# V3 _v3
+# including csv files as an input
+# K49 February spelling changed
+# Added Crash type in COI
+# Updated visualizer spreadsheet (updated missing references,, added crash type in Road user refer Camilla email 04/13/2023)
+# """
 
 # Libraries
 import pandas as pd # pandas, python-dateutil, pytz
@@ -19,14 +19,15 @@ import datetime as dt
 import sys
 import shutil
 from easygui import *
-from tkinter import *
 import streamlit as st
+import tkinter as tk
+from tkinter import simpledialog
 
 logging.getLogger('PIL').setLevel(logging.WARNING)
 
 
 # Default_Inputs
-data_traslation_xlsx = "Dictionary_OR.xlsx"
+data_traslation_xlsx = r".\templates\Dictionary_OR.xlsx"
 combined_data_csv = 'temp-file.csv'
 # User Inputs
 # path_dir=r"H:\50\50000 - Innovation Kitchen\012 - Innovation Kitchen_  Crash Recoder Tool\existing tool\raw data  from ODOTs website\\"
@@ -47,7 +48,6 @@ def txt_file_merging(path_dir,combined_data_csv, format):
         logging.error(err)
         sys.exit(1)
 
-
 def import_combined_translation_data(path_dir,combined_data_csv,data_traslation_xlsx):
     try:
         df_translation = pd.read_excel(data_traslation_xlsx)  # reading the dictionary
@@ -62,7 +62,9 @@ def import_combined_translation_data(path_dir,combined_data_csv,data_traslation_
 
 
 def data_translation(raw_df, translation_df, start_time):
+
     try:
+        status_text = st.empty()
         index_values_float = translation_df["Values"].tolist()  # converting values to a list and it is considered to be a float
         index_values_str = [str(idx) for idx in index_values_float]  # list is converted to string
         iterate = 0
@@ -70,7 +72,7 @@ def data_translation(raw_df, translation_df, start_time):
         for df_col in raw_df.columns:
             iterate = iterate+1
             unique_elements = translation_df[df_col].unique() # getting the unique values in the dictionary spreadsheet for the chosen column
-            st.text("\r"+str(round(time.time() - start_time, ndigits=0))+"s: Translating Column >> " + str(iterate)+"/"+str(no_of_columns),end=' ')
+            status_text.text("\r"+str(round(time.time() - start_time, ndigits=0))+"s: Translating Column >> " + str(iterate)+"/"+str(no_of_columns))
             # replacing the values of columns that are float or int
             if str(raw_df[df_col].dtype) == "float64" or str(raw_df[df_col].dtype) == "int64":
                 if len(unique_elements) > 1:
@@ -457,9 +459,7 @@ def add_kai_variables(raw_df):
             motrorcycle_fl.loc[motrorcycle_fl["Vehicle Type Code"] == "Motorcycle, dirt bike", 'k12_motrfl'] = 1
             motrorcycle_fl.loc[motrorcycle_fl["Vehicle Type Code"] != "Motorcycle, dirt bike", 'k12_motrfl'] = 0
 
-        """
-        Youngest & Older Driver Age
-        """
+        # Youngest & Older Driver Age
         k15_ydage = raw_df[(raw_df['Participant Type Code'] == "Driver") & (raw_df['Age'] != 0)]
         if len(k15_ydage) > 0:
             k15_ydage = k15_ydage.loc[k15_ydage.groupby('ID')['Age'].idxmin().reset_index(drop=True)]
@@ -470,18 +470,18 @@ def add_kai_variables(raw_df):
             k16_odage = k16_odage.loc[k16_odage.groupby('ID')['Age'].idxmax().reset_index(drop=True)]
             k16_odage = k16_odage.rename(columns={'Age': 'k16_odage'})
 
-        """
-            Youngest & Older Driver at Error Age
-        """
+        # """
+        #     Youngest & Older Driver at Error Age
+        # """
         k17_ydeage = raw_df[(raw_df['Participant Type Code'] == "Driver") & (raw_df['Age'] != 0) & (raw_df['Participant Error 1 Code'] != "No error") &
                             ((~raw_df['Participant Error 1 Code'].isnull())|(~raw_df['Participant Error 2 Code'].isnull())|(~raw_df['Participant Error 3 Code'].isnull()))]
         if len(k17_ydeage) > 0:
             k17_ydeage = k17_ydeage.loc[k17_ydeage.groupby('ID')['Age'].idxmin().reset_index(drop=True)]
             k17_ydeage = k17_ydeage.rename(columns={'Age': 'k17_ydeage'})
 
-            """
-            Young driver error flag
-            """
+            # """
+            # Young driver error flag
+            # """
 
             k17_ydeage.loc[(k17_ydeage["k17_ydeage"] >= 15) & (k17_ydeage["k17_ydeage"] <= 20), 'k20_yderfl'] = 1
             k17_ydeage.loc[k17_ydeage["k17_ydeage"] > 20, 'k20_yderfl'] = 0
@@ -492,15 +492,15 @@ def add_kai_variables(raw_df):
             k18_odeage = k18_odeage.loc[k18_odeage.groupby('ID')['Age'].idxmax().reset_index(drop=True)]
             k18_odeage = k18_odeage.rename(columns={'Age': 'k18_odeage'})
 
-            """
-            Old driver error flag
-            """
+            # """
+            # Old driver error flag
+            # """
             k18_odeage.loc[(k18_odeage["k18_odeage"] >= 65), 'k22_odefl'] = 1
             k18_odeage.loc[k18_odeage["k18_odeage"] < 65, 'k22_odefl'] = 0
 
-        """
-        Number of drivers at error
-        """
+        # """
+        # Number of drivers at error
+        # """
         k19_nder = raw_df[(raw_df['Participant Type Code'] == "Driver") & (raw_df['Participant Error 1 Code'] != "No error") &
                           ((~raw_df['Participant Error 1 Code'].isnull())|(~raw_df['Participant Error 2 Code'].isnull())|(~raw_df['Participant Error 3 Code'].isnull()))]
         if len(k19_nder) > 0:
@@ -510,9 +510,9 @@ def add_kai_variables(raw_df):
             k19_nder = k19_nder.rename(columns={'Participant Type Code|count': 'k19_nder'})
             k19_nder["Participant Vehicle ID"] = "General Crash Information"
 
-        """
-        young driver & Old driver flag
-        """
+        # """
+        # young driver & Old driver flag
+        # """
         k21_ydfl = raw_df[(raw_df['Participant Type Code'] == "Driver") & (raw_df['Age'] != 0)].copy()
         if len(k21_ydfl) > 0:
             k21_ydfl.loc[(k21_ydfl['Age'] >= 15) & (k21_ydfl["Age"] <= 20), 'k21_ydfl'] = 1
@@ -523,9 +523,9 @@ def add_kai_variables(raw_df):
             k23_odfl.loc[(k23_odfl['Age'] >= 65),'k23_odfl'] = 1
             k23_odfl.loc[(k23_odfl['Age'] < 65), 'k23_odfl'] = 0
 
-        """
-        young Ped & Old Ped age
-        """
+        # """
+        # young Ped & Old Ped age
+        # """
         k24_ypage_filter = ["Pedestrian", "Pedestrian using a pedestrian conveyance (wheelchair, skates, etc.)", "Pedestrian towing an object, other participant"]
         k24_ypage = raw_df[(raw_df['Participant Type Code'].isin(k24_ypage_filter)) & (raw_df['Age'] != 0)]
         if len(k24_ypage) > 0:
@@ -538,9 +538,9 @@ def add_kai_variables(raw_df):
             k25_opage = k25_opage.loc[k25_opage.groupby('ID')['Age'].idxmax().reset_index(drop=True)]
             k25_opage = k25_opage.rename(columns={'Age': 'k25_opage'})
 
-        """
-        Male or Female or non binary or unknown driver involved
-        """
+        # """
+        # Male or Female or non binary or unknown driver involved
+        # """
         driver_sex = raw_df[raw_df['Participant Type Code'] == "Driver"].copy()
         if len(driver_sex) > 0:
             driver_sex.loc[driver_sex["Sex"] == "Male", 'k26_mldr'] = 1
@@ -552,9 +552,9 @@ def add_kai_variables(raw_df):
             driver_sex.loc[driver_sex["Sex"] == "Unknown", 'k33_ukdr'] = 1
             driver_sex.loc[driver_sex["Sex"] != "Unknown", 'k33_ukdr'] = 0
 
-        """
-        Male or Female or non binary or unknown driver at error
-        """
+        # """
+        # Male or Female or non binary or unknown driver at error
+        # """
         driver = raw_df[(raw_df['Participant Type Code'] == "Driver")].copy()
         if len(driver) > 0:
             driver.loc[(driver["Sex"] == "Male") & (driver['Participant Error 1 Code'] != "No error") & ((~driver['Participant Error 1 Code'].isnull())|(~driver['Participant Error 2 Code'].isnull())|(~driver['Participant Error 3 Code'].isnull())),'k29_mlder'] = 1
@@ -565,9 +565,9 @@ def add_kai_variables(raw_df):
             driver.loc[(driver["Sex"] == "Non-Binary Gender") & (driver['Participant Error 1 Code'] == "No error"),'k31_nbder'] = 0
             driver.loc[(driver["Sex"] == "Unknown") & (driver['Participant Error 1 Code'] != "No error") & ((~driver['Participant Error 1 Code'].isnull())|(~driver['Participant Error 2 Code'].isnull())|(~driver['Participant Error 3 Code'].isnull())),'k32_ukder'] = 1
             driver.loc[(driver["Sex"] == "Unknown") & (driver['Participant Error 1 Code'] == "No error"),'k32_ukder'] = 0
-        """
-            Youngest & Older Bicyclist Age
-            """
+        # """
+        #     Youngest & Older Bicyclist Age
+        #     """
         k34_ybage_filter = ["Pedalcyclist", "Pedalcyclist towing an object, other participant"]
         k34_ybage = raw_df[(raw_df['Participant Type Code'].isin(k34_ybage_filter)) & (raw_df['Age'] != 0)]
         if len(k34_ybage) > 0:
@@ -580,9 +580,9 @@ def add_kai_variables(raw_df):
             k35_obage = k35_obage.loc[k35_obage.groupby('ID')['Age'].idxmax().reset_index(drop=True)]
             k35_obage = k35_obage.rename(columns={'Age': 'k35_obage'})
 
-        """
-        Male or Female or non binary or unknown bicyclist
-        """
+        # """
+        # Male or Female or non binary or unknown bicyclist
+        # """
         bicyclist_sex_filter = ["Pedalcyclist", "Pedalcyclist towing an object, other participant"]
         bicyclist_sex = raw_df[raw_df['Participant Type Code'].isin(bicyclist_sex_filter)].copy()
         if len(bicyclist_sex) > 0:
@@ -595,9 +595,9 @@ def add_kai_variables(raw_df):
             bicyclist_sex.loc[bicyclist_sex["Sex"] == "Unknown", 'k39_ukbage'] = 1
             bicyclist_sex.loc[bicyclist_sex["Sex"] != "Unknown", 'k39_ukbage'] = 0
 
-        """
-        Male or Female or non binary or unknown Ped Involved
-        """
+        # """
+        # Male or Female or non binary or unknown Ped Involved
+        # """
         ped_sex_filter = ["Pedestrian", "Pedestrian using a pedestrian conveyance (wheelchair, skates, etc.)", "Pedestrian towing an object, other participant"]
         ped_sex = raw_df[raw_df['Participant Type Code'].isin(ped_sex_filter)].copy()
         if len(ped_sex) > 0:
@@ -610,16 +610,16 @@ def add_kai_variables(raw_df):
             ped_sex.loc[ped_sex["Sex"] == "Unknown", 'k43_ukped'] = 1
             ped_sex.loc[ped_sex["Sex"] != "Unknown", 'k43_ukped'] = 0
 
-        """ 
-        Vehicle Travel Direction
-        """
+        # """ 
+        # Vehicle Travel Direction
+        # """
         k44_dirvh = raw_df[(~raw_df["Vehicle Travel Direction From"].isnull()) & (~raw_df["Vehicle Travel Direction To"].isnull())].copy()
         if len(k44_dirvh) > 0:
             k44_dirvh["k44_dirvh"] = "From " + k44_dirvh["Vehicle Travel Direction From"].astype(str) + " To " + k44_dirvh["Vehicle Travel Direction To"].astype(str)
 
-        """
-        Driver Residence    
-        """
+        # """
+        # Driver Residence    
+        # """
         driver_res = raw_df[(raw_df['Participant Type Code'] == "Driver")].copy()
         if len(driver_res) > 0:
             driver_res.loc[driver_res["Driver Residence Status"] == "OR Res. <25 mi of home", "k45_lcdfl"] = 1
@@ -628,9 +628,9 @@ def add_kai_variables(raw_df):
             driver_res.loc[driver_res["Driver Residence Status"] == "OR Res. >25 mi of home", "k46_nlcdfl"] = 1
             driver_res.loc[driver_res["Driver Residence Status"] != "OR Res. >25 mi of home", "k46_nlcdfl"] = 0
 
-        """
-        Total Vehicles Involved,  Vehicle classification
-        """
+        # """
+        # Total Vehicles Involved,  Vehicle classification
+        # """
         k47_numvh = raw_df[raw_df["Record Type"] == 2].copy()
         k55_vhclss = pd.DataFrame()
         if len(k47_numvh) > 0:
@@ -645,9 +645,9 @@ def add_kai_variables(raw_df):
                 k55_vhclss.loc[k55_vhclss["k47_numvh"] == 1 , 'k55_vhclss'] = "single vehicle"
                 k55_vhclss.loc[k55_vhclss["k47_numvh"] > 1, 'k55_vhclss'] = "multi-vehicle"
 
-        """
-        Date, month, time, hour
-        """
+        # """
+        # Date, month, time, hour
+        # """
         k48_crshdt = raw_df[raw_df["Record Type"] == 1].copy()
         if len(k48_crshdt) > 0:
             k48_crshdt["k48_crshdt"] = k48_crshdt["Crash Year"].astype(int).astype(str)+"-"+k48_crshdt["Crash Month"].astype(int).astype(str)+"-"+k48_crshdt["Crash Day"].astype(int).astype(str)
@@ -671,16 +671,16 @@ def add_kai_variables(raw_df):
         if len(k50_crshtm) > 0:
             k50_crshtm["k50_crshtm"] = k50_crshtm["Crash Hour"].astype(int).astype(str) + ":00"
 
-        """ 
-        Collision
-        """
+        # """ 
+        # Collision
+        # """
         k54_coltyp = raw_df[raw_df["Record Type"] == 1].copy()
         if len(k54_coltyp) > 0:
             k54_coltyp["k54_coltyp"] = k54_coltyp["Collision Type"]
             k54_coltyp.loc[k54_coltyp["Crash Type"] == "Pedalcyclist", 'k54_coltyp'] = "Pedalcyclist"
-        """
-        Sign /Signal Violation
-        """
+        # """
+        # Sign /Signal Violation
+        # """
         k59_siviol_filter =["Failed to obey mandatory traffic turn signal, sign or lane markings", "Disregarded traffic signal",
                             "Disregarded stop sign or flashing red","Disregarded warning sign, flares or flashing amber",
                             "Disregarded Rail Road signal, Rail Road sign, or Rail Road flagman"]
@@ -689,9 +689,9 @@ def add_kai_variables(raw_df):
             k59_siviol.loc[(k59_siviol["Participant Error 1 Code"].isin(k59_siviol_filter)) | (k59_siviol["Participant Error 2 Code"].isin(k59_siviol_filter)) | (k59_siviol["Participant Error 3 Code"].isin(k59_siviol_filter)), 'k59_siviol'] = 1
             k59_siviol.loc[(~k59_siviol["Participant Error 1 Code"].isin(k59_siviol_filter)) & (~k59_siviol["Participant Error 2 Code"].isin(k59_siviol_filter)) & (~k59_siviol["Participant Error 3 Code"].isin(k59_siviol_filter)), 'k59_siviol'] = 0
 
-        """
-        Crash City / Place
-        """
+        # """
+        # Crash City / Place
+        # """
         k61_crshpl = raw_df[raw_df["Record Type"] == 1].reset_index().copy()
         if len(k61_crshpl) > 0:
             k61_crshpl["k61_crshpl"] = "N/A"
@@ -1022,7 +1022,7 @@ def excel_table_export(df, df_pivot, output_dir, op_file_name):
         col_name_df = generate_column_names(df, df_pivot)  # generate column names
         df = df[df["Record Type"] == 3].reset_index()
         df.drop(columns="index", inplace=True)
-        shutil.copy("Visualizer_OR.xlsx", output_dir+op_file_name)
+        shutil.copy(r".\templates\Visualizer_OR.xlsx", output_dir+op_file_name)
         # df.to_csv(output_dir + "viz_party.csv", index= False)
         # df_pivot.to_csv(output_dir + "viz_col.csv", index=False)
         # col_name_df.to_csv(output_dir + "viz_coi.csv", index=False)
@@ -1053,53 +1053,58 @@ def excel_table_export(df, df_pivot, output_dir, op_file_name):
         logging.error(err)
         sys.exit(1)
 
+def get_output_filename(name):
+    root = tk.Tk()
+    root.withdraw()  # Hide the main window
+    filename = simpledialog.askstring(name, "Please enter the output file name:                                              \n\n")
+    root.destroy()  # Destroy the main window
+    return str(filename)
+
+def get_file_format(name):
+    root = tk.Tk()
+    root.withdraw()  # Hide the main window
+    st.text("If input data is in '.txt' format enter 1, else enter 0 ...")
+    format = simpledialog.askstring(name, "If input data is in '.txt' format, please enter 1, else enter 0          \n\n")
+    root.destroy()  # Destroy the main window
+    return str(format)
 
 # Main
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG, filename="Log.log", filemode='a')
-    st.text(" _  ___ _   _       _                                                        _       _                _____\n"              
-             "| |/ (_) | | |     | |                   ___        /\                      (_)     | |              |_   _|\n"
-             "| ' / _| |_| |_ ___| |___  ___  _ __    ( _ )      /  \   ___ ___  ___   ___ _  __ _| |_ ___  ___      | |  _ __   ___\n"
-             "|  < | | __| __/ _ \ / __|/ _ \| '_ \   / _ \/\   / /\ \ / __/ __|/ _ \ / __| |/ _` | __/ _ \/ __|     | | | '_ \ / __|\n"
-             "| . \| | |_| ||  __/ \__ \ (_) | | | | | (_>  <  / ____ \\__ \__ \ (_) | (__| | (_| | ||  __/\__ \_   _| |_| | | | (__ _\n"
-             "|_|\_\_|\__|\__\___|_|___/\___/|_| |_| _\___/\/ /_/    \_\___/___/\___/ \___|_|\__,_|\__\___||___( ) |_____|_| |_|\___(_)\n"
-             "|_   _|                           | | (_)             | |/ (_) |     | |                         |/\n"
-            "  | |  _ __  _ __   _____   ____ _| |_ _  ___  _ __   | ' / _| |_ ___| |__   ___ _ __\n"
-            "  | | | '_ \| '_ \ / _ \ \ / / _` | __| |/ _ \| '_ \  |  < | | __/ __| '_ \ / _ \ '_ \\\n"
-            " _| |_| | | | | | | (_) \ V / (_| | |_| | (_) | | | | | . \| | || (__| | | |  __/ | | |\n"
-            "|_____|_| |_|_| |_|\___/ \_/ \__,_|\__|_|\___/|_| |_| |_|\_\_|\__\___|_| |_|\___|_| |_|\n")
+    file_version = "Version 4"  # Kindly update this value after every version update
 
-    st.text("Crash Recoder Tool, an Innovation Kitchen Product developed by Kittelson and Associates, Inc. (KAI)")
-    st.text("Contact: Azhagan (Azy) Avr - aavr@kittelson.com")
+    logging.basicConfig(level=logging.DEBUG, filename=r".\log\Log.log", filemode='a')
+    st.image(r'.\brandfolder\Banner.png')
+    st.markdown(f"<div style='text-align: right;'>{file_version}</div>", unsafe_allow_html=True)  
     logging.info("Crash Recoder Tool, an Innovation Kitchen Product developed by Kittelson and Associates, Inc. (KAI)")
     logging.info("Contact: Azhagan (Azy) Avr  - aavr@kittelson.com")
     logging.info(dt.datetime.now())
-    st.text()
-
-    """
-    Forced i/p and o/p folders
-    """
+    time.sleep(2)
     try:
-        file_version = "v4"  # Kindly update this value after every version update
         project_name = "Crash Recoder Tool - " + file_version
-
-
-        # path_dir = diropenbox("Choose the input folder: ", project_name)
-        path_dir = r"D:\Kittelson\Scripts\Crash Recoder\Github backup\00-Input\27003-007\\"
+        
+        st.text("Choose the input folder, where your input files are located ...")
+        time.sleep(1)
+        path_dir = diropenbox("Choose the input folder: ", project_name)
+        # path_dir = r"D:\Kittelson\Scripts\Crash Recoder\Github backup\00-Input\\29019"
         path_dir = path_dir + "\\"
+        st.text(path_dir)
+        
+        st.text("Choose the output folder (Note: Should not be same as the input folder) ...")
+        time.sleep(1)
+        path_out_ip = diropenbox("Choose the output folder: ", project_name)
+        # path_out_ip = r"D:\Kittelson\Scripts\Crash Recoder\Github backup\01-Output"
+        path_out = path_out_ip + "\\"
+        logging.info(str(path_out))
+        st.text(path_out)
 
-        # path_out = diropenbox("Choose the output folder: ", project_name)
-        path_out = r"D:\Kittelson\Scripts\Crash Recoder\Github backup\01-Output\\"
-        path_out = path_out + "\\"
-
-        # output_filename = enterbox("Please enter the output file name: ", project_name)
-        output_filename = "streamlit"
+        output_filename = get_output_filename(project_name)
+        # output_filename = "streamlit"
 
         veh_code_seq = "0" # changing it to 0 as ODOT changed their format
-
-        # file_format = enterbox("If input data is in '.txt' format enter 1, else enter 0", project_name)
-        file_format = "1"
-
+        
+        file_format = get_file_format(project_name)
+        # file_format = "1"
+        
         output_filename1 = output_filename + "_Collision.csv"
         output_filename2 = output_filename + "_Party.csv"
         output_filename3 = output_filename + "_Visualizer.xlsx"
@@ -1121,7 +1126,6 @@ if __name__ == '__main__':
     raw_data, translation_df = import_combined_translation_data(path_dir,combined_data_csv, data_traslation_xlsx)
     translated_df = data_translation(raw_data,translation_df, start_time)
 
-    st.text()
     st.text(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating party level data.....")
     logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating party level data.....")
     pivot_col_id = participant_vehicle_id(translated_df, veh_code_seq)
@@ -1131,10 +1135,10 @@ if __name__ == '__main__':
 
     # ....................................................................................................................
 
-    """
-    Updated Output file names
-    Generating multi line output too
-    """
+    # """
+    # Updated Output file names
+    # Generating multi line output too
+    # """
 
     st.text(str(round(time.time() - start_time, ndigits=2))+"s"+": Creating new variables.....")
     logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating new variables.....")
@@ -1148,15 +1152,16 @@ if __name__ == '__main__':
     st.text(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Exporting data to visualizer.....")
     logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Exporting data to visualizer.....")
     excel_table_export(new_var_df, pivot_df, path_out, output_filename3)
-    st.text()
 
     # ....................................................................................................................
     try:
         os.remove(path_dir+combined_data_csv)
         logging.info(str(round((time.time() - start_time), ndigits=2)) + "s: Recoding complete.")
-        input(str(round((time.time() - start_time), ndigits=2)) + "s: Recoding complete. Press 'Enter' key to exit.")
+        st.text(str(round((time.time() - start_time), ndigits=2)) + "s: Recoding complete.")
+        st.text("Your results are available in this folder: " + str(path_out))
+
 
     except Exception as err:
         logging.error(err)
         logging.info(str(round((time.time() - start_time), ndigits=2))+ "s: Recoding incomplete.")
-        input(str(round((time.time() - start_time), ndigits=2)) + "s: Recoding incomplete, check log file for error. Press 'Enter' key to exit.")
+        st.text(str(round((time.time() - start_time), ndigits=2)) + "s: Recoding incomplete, check log file for error.")
