@@ -23,7 +23,7 @@ logging.getLogger('PIL').setLevel(logging.WARNING)
 
 
 # Default_Inputs
-data_traslation_xlsx = r".\templates\Dictionary_OR.xlsx"
+data_traslation_xlsx = "Dictionary_OR.xlsx"
 combined_data_csv = 'temp-file.csv'
 # User Inputs
 # path_dir=r"H:\50\50000 - Innovation Kitchen\012 - Innovation Kitchen_  Crash Recoder Tool\existing tool\raw data  from ODOTs website\\"
@@ -1018,7 +1018,7 @@ def excel_table_export(df, df_pivot, output_dir, op_file_name):
         col_name_df = generate_column_names(df, df_pivot)  # generate column names
         df = df[df["Record Type"] == 3].reset_index()
         df.drop(columns="index", inplace=True)
-        shutil.copy(r".\templates\Visualizer_OR.xlsx", output_dir+op_file_name)
+        shutil.copy("Visualizer_OR.xlsx", output_dir+op_file_name)
         # df.to_csv(output_dir + "viz_party.csv", index= False)
         # df_pivot.to_csv(output_dir + "viz_col.csv", index=False)
         # col_name_df.to_csv(output_dir + "viz_coi.csv", index=False)
