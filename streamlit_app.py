@@ -18,10 +18,10 @@ import logging
 import datetime as dt
 import sys
 import shutil
-from easygui import *
 import streamlit as st
 import tkinter as tk
 from tkinter import simpledialog
+from easygui import *
 
 logging.getLogger('PIL').setLevel(logging.WARNING)
 
