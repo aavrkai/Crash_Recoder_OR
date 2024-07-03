@@ -19,7 +19,6 @@ import datetime as dt
 import sys
 import shutil
 import streamlit as st
-
 logging.getLogger('PIL').setLevel(logging.WARNING)
 
 
@@ -1050,20 +1049,20 @@ def excel_table_export(df, df_pivot, output_dir, op_file_name):
         logging.error(err)
         sys.exit(1)
 
-def get_output_filename(name):
-    root = tk.Tk()
-    root.withdraw()  # Hide the main window
-    filename = simpledialog.askstring(name, "Please enter the output file name:                                              \n\n")
-    root.destroy()  # Destroy the main window
-    return str(filename)
+# def get_output_filename(name):
+#     root = tk.Tk()
+#     root.withdraw()  # Hide the main window
+#     filename = simpledialog.askstring(name, "Please enter the output file name:                                              \n\n")
+#     root.destroy()  # Destroy the main window
+#     return str(filename)
 
-def get_file_format(name):
-    root = tk.Tk()
-    root.withdraw()  # Hide the main window
-    st.text("If input data is in '.txt' format enter 1, else enter 0 ...")
-    format = simpledialog.askstring(name, "If input data is in '.txt' format, please enter 1, else enter 0          \n\n")
-    root.destroy()  # Destroy the main window
-    return str(format)
+# def get_file_format(name):
+#     root = tk.Tk()
+#     root.withdraw()  # Hide the main window
+#     st.text("If input data is in '.txt' format enter 1, else enter 0 ...")
+#     format = simpledialog.askstring(name, "If input data is in '.txt' format, please enter 1, else enter 0          \n\n")
+#     root.destroy()  # Destroy the main window
+#     return str(format)
 
 # Main
 if __name__ == '__main__':
