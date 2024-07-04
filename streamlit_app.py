@@ -48,6 +48,7 @@ def txt_file_merging(path_dir,combined_data_csv, format):
 def import_combined_translation_data(path_dir,combined_data_csv,data_traslation_xlsx):
     try:
         df_translation = pd.read_excel(data_traslation_xlsx)  # reading the dictionary
+        st.text(df_translation)
         temp = df_translation.drop(columns='Values')  # droping the values column
         df = pd.read_csv(path_dir+combined_data_csv, header=None, low_memory=False, names=temp.columns.tolist())  # reading the combined data csv and adding the header
         df.to_csv(path_dir+combined_data_csv, index=False) # saving the csv
