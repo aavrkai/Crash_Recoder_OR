@@ -34,6 +34,7 @@ def txt_file_merging(path_dir,combined_data_csv, format):
     # import one text file at a time
     try:
         filenames = glob.glob(path_dir + format)  # getting the path of all text/csv files in the directory
+        st.text(filenames)
         logging.info(filenames)
         with open(path_dir + combined_data_csv, 'w') as outfile:
             for fname in filenames:
