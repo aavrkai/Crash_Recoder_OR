@@ -1120,7 +1120,7 @@ def get_url(url_desc):
         pass
 
 
-def download_all_files(col_df, col_name, party_df, party_name, viz_buffer, viz_name):
+def download_all_files(col_df, col_name, party_df, party_name, viz_buffer, viz_name, zip_name):
     # Create in-memory buffers
     collision_buffer = io.BytesIO()
     party_buffer = io.BytesIO()
@@ -1147,7 +1147,7 @@ def download_all_files(col_df, col_name, party_df, party_name, viz_buffer, viz_n
     st.download_button(
         label="Download All Files",
         data=zip_buffer,
-        file_name="all_files.zip",
+        file_name=zip_name + ".zip",
         mime='application/zip',
     )
 
@@ -1209,7 +1209,7 @@ def main():
                 # logging.info(str(round((time.time() - start_time), ndigits=2)) + "s: Recoding complete.")
                 st.text(str(round((time.time() - start_time), ndigits=2)) + "s: Recoding complete.")
 
-                download_all_files(pivot_df, output_filename1, new_var_df, output_filename2, visualizer_buffer, output_filename3)
+                download_all_files(pivot_df, output_filename1, new_var_df, output_filename2, visualizer_buffer, output_filename3, output_filename)
 
 # Main
 if __name__ == '__main__':
