@@ -1153,7 +1153,7 @@ def download_all_files(col_df, col_name, party_df, party_name, viz_buffer, viz_n
 
 def main():
     file_version = "Version 4"  # Kindly update this value after every version update
-    project_name = "Crash Recoder Tool - " + file_version
+    project_name = "OR Crash Recoder Tool - " + file_version
     # # logging.basicConfig(level=# logging.DEBUG, filename="Log.log", filemode='a')
     st.image(get_url("web_image"), use_column_width=True)
     st.markdown(f"""<h1 style='text-align: center; font-size: 3em;'>{project_name}</h1>""", unsafe_allow_html=True)
