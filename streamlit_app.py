@@ -30,7 +30,7 @@ def get_uploaded_files(file):
 
 def get_dict_mod_raw_data(raw_df):
 
-    dict_df = pd.read_excel("https://github.com/aavrkai/Crash_Recoder_OR/raw/main/Dictionary_OR.xlsx")
+    dict_df = pd.read_excel(get_url("dict"))
 
     temp = dict_df.drop(columns='Values')  # droping the values column
     cols = temp.columns.tolist()
@@ -1068,7 +1068,7 @@ def update_or_add_sheet_in_workbook(wb, sheet_name, df):
 
 
 def excel_table_export(df, df_pivot):
-    viz_file = "https://github.com/aavrkai/Crash_Recoder_OR/raw/main/Visualizer_OR.xlsx"
+    viz_file = get_url("viz")
 
     try:
         workbook = load_workbook(download_excel(viz_file))
@@ -1107,12 +1107,21 @@ def excel_table_export(df, df_pivot):
         logging.error(err)
         sys.exit(1)
 
+def get_url(url_desc):
+    if url_desc == "web_image":
+        return r'https://github.com/aavrkai/Crash_Recoder_OR/blob/main/brandfolder/Banner.png?raw=True'
+    elif url_desc == "dict":
+        return r"https://github.com/aavrkai/Crash_Recoder_OR/raw/main/Dictionary_OR.xlsx"
+    elif url_desc == "dict":
+        return r"https://github.com/aavrkai/Crash_Recoder_OR/raw/main/Visualizer_OR.xlsx"
+    else:
+        pass
 
 def main():
     file_version = "Version 4"  # Kindly update this value after every version update
     project_name = "Crash Recoder Tool - " + file_version
     logging.basicConfig(level=logging.DEBUG, filename="Log.log", filemode='a')
-    st.image(r'https://github.com/aavrkai/Crash_Recoder_OR/blob/main/brandfolder/Banner.png?raw=True', use_column_width=True)
+    st.image(get_url("web_image"), use_column_width=True)
     st.markdown(f"""<h1 style='text-align: center; font-size: 3em;'>{project_name}</h1>""", unsafe_allow_html=True)
     logging.info("Crash Recoder Tool, an Innovation Kitchen Product developed by Kittelson and Associates, Inc. (KAI)")
     logging.info("Contact: Azhagan (Azy) Avr  - aavr@kittelson.com")
