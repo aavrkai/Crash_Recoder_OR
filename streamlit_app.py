@@ -16,8 +16,10 @@ import streamlit as st
 from io import BytesIO
 import requests
 from openpyxl import load_workbook
+import zipfile
+import io
 
-logging.getLogger('PIL').setLevel(logging.WARNING)
+# logging.getLogger('PIL').setLevel(# logging.WARNING)
 
 
 def get_file_format():
@@ -136,7 +138,7 @@ def data_translation(raw_df, translation_df, start_time):
         return (raw_df)
 
     except Exception as err:
-        logging.error(err)
+        # logging.error(err)
         st.text(err)
         sys.exit(1)
 
@@ -177,7 +179,7 @@ def participant_vehicle_id(raw_df, veh_code):
         return raw_df
     except Exception as err:
         # st.text(err)
-        logging.error(err)
+        # logging.error(err)
         sys.exit(1)
 
 
@@ -933,7 +935,7 @@ def add_kai_variables(raw_df):
         # raw_df.to_csv("ML_output_kai.csv", index=False)
 
     except Exception as err:
-        logging.error(err)
+        # logging.error(err)
         sys.exit(1)
     return raw_df
 
@@ -972,7 +974,7 @@ def pivot_data(raw_df):
         # raw_df.to_csv(path_out+output_filename1,index=False)
         return raw_df
     except Exception as err:
-        logging.error(err)
+        # logging.error(err)
         sys.exit(1)
 
 
@@ -1037,7 +1039,7 @@ def generate_column_names(party, collision):
         return df_col
 
     except Exception as err:
-        logging.error(err)
+        # logging.error(err)
         sys.exit(1)
 
 
@@ -1094,38 +1096,70 @@ def excel_table_export(df, df_pivot):
             # Save the final output to BytesIO
             final_output = BytesIO()
             workbook.save(final_output)
-            processed_data = final_output.getvalue()
-            return processed_data
+            
+            return final_output
             
         except Exception as err:
             st.text(err)
             # st.text("Worksheet(s) does not exist, check log file for next steps. However output file will be created....")
-            logging.info("There may be a duplicate in one or more Input tabs, delete the old tab(s) and rename the new one, to the same name as the old tab. However output file will be created....")
+            # logging.info("There may be a duplicate in one or more Input tabs, delete the old tab(s) and rename the new one, to the same name as the old tab. However output file will be created....")
     
     except Exception as err:
         st.text(err)
-        logging.error(err)
+        # logging.error(err)
         sys.exit(1)
 
 def get_url(url_desc):
     if url_desc == "web_image":
-        return r'https://github.com/aavrkai/Crash_Recoder_OR/blob/main/brandfolder/Banner.png?raw=True'
+        return 'https://github.com/aavrkai/Crash_Recoder_OR/blob/main/brandfolder/Banner.png?raw=True'
     elif url_desc == "dict":
-        return r"https://github.com/aavrkai/Crash_Recoder_OR/blob/main/templates/Dictionary_OR.xlsx"
-    elif url_desc == "dict":
-        return r"https://github.com/aavrkai/Crash_Recoder_OR/blob/main/templates/Visualizer_OR.xlsx"
+        return "https://github.com/aavrkai/Crash_Recoder_OR/raw/main/templates/Dictionary_OR.xlsx"
+    elif url_desc == "viz":
+        return "https://github.com/aavrkai/Crash_Recoder_OR/raw/main/templates/Visualizer_OR.xlsx"
     else:
         pass
+
+
+def download_all_files(col_df, col_name, party_df, party_name, viz_buffer, viz_name):
+    # Create in-memory buffers
+    collision_buffer = io.BytesIO()
+    party_buffer = io.BytesIO()
+
+    collision_otput = col_df.to_csv(index=False).encode('utf-8')
+    collision_buffer.write(collision_otput)
+    
+    party_otput = party_df.to_csv(index=False).encode('utf-8')
+    party_buffer.write(party_otput)
+    
+    # Create a zip buffer
+    zip_buffer = io.BytesIO()
+    
+    # Create a zip file in the buffer
+    with zipfile.ZipFile(zip_buffer, 'w') as zf:
+        zf.writestr(col_name, collision_buffer.getvalue())
+        zf.writestr(party_name, party_buffer.getvalue())
+        zf.writestr(viz_name, viz_buffer.getvalue())
+
+     # Seek to the start of the zip buffer
+    zip_buffer.seek(0)
+    
+    # Create the download button for the zip file
+    st.download_button(
+        label="Download All Files",
+        data=zip_buffer,
+        file_name="all_files.zip",
+        mime='application/zip',
+    )
 
 def main():
     file_version = "Version 4"  # Kindly update this value after every version update
     project_name = "Crash Recoder Tool - " + file_version
-    logging.basicConfig(level=logging.DEBUG, filename="Log.log", filemode='a')
+    # # logging.basicConfig(level=# logging.DEBUG, filename="Log.log", filemode='a')
     st.image(get_url("web_image"), use_column_width=True)
     st.markdown(f"""<h1 style='text-align: center; font-size: 3em;'>{project_name}</h1>""", unsafe_allow_html=True)
-    logging.info("Crash Recoder Tool, an Innovation Kitchen Product developed by Kittelson and Associates, Inc. (KAI)")
-    logging.info("Contact: Azhagan (Azy) Avr  - aavr@kittelson.com")
-    logging.info(dt.datetime.now())
+    # logging.info("Crash Recoder Tool, an Innovation Kitchen Product developed by Kittelson and Associates, Inc. (KAI)")
+    # logging.info("Contact: Azhagan (Azy) Avr  - aavr@kittelson.com")
+    # logging.info(dt.datetime.now())
     st.text("\n  \n")
        
     format_file = get_file_format()
@@ -1151,53 +1185,31 @@ def main():
 
                 start_time = time.time()
                 st.text(str(round(time.time() - start_time, ndigits=2))+"s"+": Importing data translation table.....")
-                logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Importing data translation table.....")
+                # logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Importing data translation table.....")
                 translated_df = data_translation(raw_data_mod,translation_df, start_time)
 
                 st.text(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating party level data.....")
-                logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating party level data.....")
+                # logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating party level data.....")
                 pivot_col_id = participant_vehicle_id(translated_df, veh_code_seq)
 
                 st.text(str(round(time.time() - start_time, ndigits=2))+"s"+": Creating new variables.....")
-                logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating new variables.....")
+                # logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating new variables.....")
                 new_var_df = add_kai_variables(pivot_col_id) # Outputfilename 2 df
 
                 st.text(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating collision level data.....")
-                logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating collision level data.....")
+                # logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating collision level data.....")
                 pivot_df = pivot_data(new_var_df) # Output filename 1 df
 
                 st.text(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Exporting data to visualizer.....")
-                logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Exporting data to visualizer.....")
+                # logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Exporting data to visualizer.....")
                 
-                visualizer = excel_table_export(new_var_df, pivot_df) #visualizer file
+                visualizer_buffer = excel_table_export(new_var_df, pivot_df) #visualizer file
 
                 # ....................................................................................................................
-                logging.info(str(round((time.time() - start_time), ndigits=2)) + "s: Recoding complete.")
+                # logging.info(str(round((time.time() - start_time), ndigits=2)) + "s: Recoding complete.")
                 st.text(str(round((time.time() - start_time), ndigits=2)) + "s: Recoding complete.")
-                
-                collision_otput = pivot_df.to_csv(index=False).encode('utf-8')
-                st.download_button(
-                                    label="Download: " + output_filename1,
-                                    data=collision_otput,
-                                    file_name=output_filename1,
-                                    mime='text/csv',
-                                )
-                
-                party_otput = new_var_df.to_csv(index=False).encode('utf-8')
-                st.download_button(
-                                    label="Download: " + output_filename2,
-                                    data=party_otput,
-                                    file_name=output_filename2,
-                                    mime='text/csv',
-                                )
-                
-                st.download_button(
-                label="Download: " + output_filename3,
-                data=visualizer,
-                file_name= output_filename3,
-                mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                                    )
 
+                download_all_files(pivot_df, output_filename1, new_var_df, output_filename2, visualizer_buffer, output_filename3)
 
 # Main
 if __name__ == '__main__':
