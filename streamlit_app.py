@@ -1111,9 +1111,9 @@ def get_url(url_desc):
     if url_desc == "web_image":
         return r'https://github.com/aavrkai/Crash_Recoder_OR/blob/main/brandfolder/Banner.png?raw=True'
     elif url_desc == "dict":
-        return r"https://github.com/aavrkai/Crash_Recoder_OR/raw/main/Dictionary_OR.xlsx"
+        return r"https://github.com/aavrkai/Crash_Recoder_OR/blob/main/templates/Dictionary_OR.xlsx"
     elif url_desc == "dict":
-        return r"https://github.com/aavrkai/Crash_Recoder_OR/raw/main/Visualizer_OR.xlsx"
+        return r"https://github.com/aavrkai/Crash_Recoder_OR/blob/main/templates/Visualizer_OR.xlsx"
     else:
         pass
 
