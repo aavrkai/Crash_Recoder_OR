@@ -1,27 +1,69 @@
 # """
 # Developed by Azhagan Avr (aavr@kittelson.com)
-# V3 _v3
-# including csv files as an input
-# K49 February spelling changed
-# Added Crash type in COI
-# Updated visualizer spreadsheet (updated missing references,, added crash type in Road user refer Camilla email 04/13/2023)
+# V4
+# Upgraded code to work with Streamlit
 # """
 
 # Libraries
 import pandas as pd # pandas, python-dateutil, pytz
 import numpy as np
-import glob
 import math
 import time
-import os
 import logging
 import datetime as dt
 import sys
-import shutil
 import streamlit as st
-from io import StringIO
+from io import BytesIO
+import requests
+from openpyxl import load_workbook
 
 logging.getLogger('PIL').setLevel(logging.WARNING)
+
+
+def get_file_format():
+    return st.selectbox("Select the file format", ["",'txt', 'csv'])
+
+
+def get_uploaded_files(file):
+    return st.file_uploader(f"Upload {file} files", accept_multiple_files=True, type=[file])
+
+
+def get_dict_mod_raw_data(raw_df):
+
+    dict_df = pd.read_excel("https://github.com/aavrkai/Crash_Recoder_OR/raw/main/Dictionary_OR.xlsx")
+
+    temp = dict_df.drop(columns='Values')  # droping the values column
+    cols = temp.columns.tolist()
+    raw_df.columns = cols    
+    return dict_df, raw_df
+
+
+def get_output_file_name():
+    return st.text_input("Please enter the output filename: ")
+
+
+def concatenate_files(uploaded_files, format_file):
+    if format_file == 'txt':
+        content = ""
+        for uploaded_file in uploaded_files:
+            content += uploaded_file.getvalue().decode("utf-8").strip() + "\n"
+        content = content.strip()
+        lines = content.splitlines()
+        data = [line.split(',') for line in lines]
+        concatenated_df = pd.DataFrame(data)
+    elif format_file == 'csv':
+        dfs = []
+        for uploaded_file in uploaded_files:
+            df = pd.read_csv(uploaded_file)
+            dfs.append(df)
+        concatenated_df = pd.concat(dfs, ignore_index=True)
+    else:
+        raise ValueError("Unsupported file format. Please select either 'txt' or 'csv'.")
+    
+    # Remove completely empty rows
+    concatenated_df.dropna(how='all', inplace=True)
+    return concatenated_df
+
 
 def data_translation(raw_df, translation_df, start_time):
 
@@ -999,33 +1041,66 @@ def generate_column_names(party, collision):
         sys.exit(1)
 
 
-def excel_table_export(df, df_pivot, viz):
+def load_excel_from_url(url):
+    return pd.ExcelFile(download_excel(url))
+
+
+# Function to download the Excel file from URL
+def download_excel(url):
+    response = requests.get(url)
+    response.raise_for_status()  # Ensure we notice bad responses
+    return BytesIO(response.content)
+
+
+# Function to convert DataFrame to Excel format, preserving formatting and formulas
+def update_or_add_sheet_in_workbook(wb, sheet_name, df):
+
+    ws = wb.create_sheet(title=sheet_name)
+
+    for r_idx, row in df.iterrows():
+        for c_idx, value in enumerate(row):
+            ws.cell(row=r_idx + 2, column=c_idx + 1, value=value)  # assuming header is in the first row
+
+    for idx, col in enumerate(df.columns, 1):
+        ws.cell(row=1, column=idx, value=col)
+
+    return wb
+
+
+def excel_table_export(df, df_pivot):
+    viz_file = "https://github.com/aavrkai/Crash_Recoder_OR/raw/main/Visualizer_OR.xlsx"
+
     try:
+        workbook = load_workbook(download_excel(viz_file))
+
         col_name_df = generate_column_names(df, df_pivot)  # generate column names
         df = df[df["Record Type"] == 3].reset_index()
         df.drop(columns="index", inplace=True)
-        st.write(df)
+
         # df.to_csv(output_dir + "viz_party.csv", index= False)
         # df_pivot.to_csv(output_dir + "viz_col.csv", index=False)
         # col_name_df.to_csv(output_dir + "viz_coi.csv", index=False)
 
-        with pd.ExcelWriter(viz, engine='openpyxl', mode='a') as writer:
-            workbook = writer.book
-            try:
-                # removing existing placeholder worksheets from the spreadsheet
-                workbook.remove(workbook['Collision'])
-                workbook.remove(workbook['Party'])
-                workbook.remove(workbook['COI'])
-                # writing new DFs to the spreadsheet
-                df.to_excel(writer, sheet_name='Party', index=False)
-                df_pivot.to_excel(writer, sheet_name='Collision', index=False)
-                col_name_df.to_excel(writer, sheet_name='COI', index=False)
+        try:
+            # Remove existing placeholder worksheets
+            for sheet in ['Collision', 'Party', 'COI']:
+                if sheet in workbook.sheetnames:
+                    del workbook[sheet]
 
-                return viz.getvalue()
-                
-            except:
-                st.text("Worksheet(s) does not exist, check log file for next steps. However output file will be created....")
-                logging.info("There may be a duplicate in one or more Input tabs, delete the old tab(s) and rename the new one, to the same name as the old tab. However output file will be created....")
+            workbook = update_or_add_sheet_in_workbook(workbook, "Party", df)
+            workbook = update_or_add_sheet_in_workbook(workbook, "Collision", df_pivot)
+            workbook = update_or_add_sheet_in_workbook(workbook, "COI", col_name_df)
+
+            # Save the final output to BytesIO
+            final_output = BytesIO()
+            workbook.save(final_output)
+            processed_data = final_output.getvalue()
+            return processed_data
+            
+        except Exception as err:
+            st.text(err)
+            # st.text("Worksheet(s) does not exist, check log file for next steps. However output file will be created....")
+            logging.info("There may be a duplicate in one or more Input tabs, delete the old tab(s) and rename the new one, to the same name as the old tab. However output file will be created....")
     
     except Exception as err:
         st.text(err)
@@ -1033,125 +1108,88 @@ def excel_table_export(df, df_pivot, viz):
         sys.exit(1)
 
 
-def concatenate_files(uploaded_files, format_file):
-    if format_file == 'txt':
-        content = ""
-        for uploaded_file in uploaded_files:
-            content += uploaded_file.getvalue().decode("utf-8").strip() + "\n"
-        content = content.strip()
-        lines = content.splitlines()
-        data = [line.split(',') for line in lines]
-        concatenated_df = pd.DataFrame(data)
-    elif format_file == 'csv':
-        dfs = []
-        for uploaded_file in uploaded_files:
-            df = pd.read_csv(uploaded_file)
-            dfs.append(df)
-        concatenated_df = pd.concat(dfs, ignore_index=True)
-    else:
-        raise ValueError("Unsupported file format. Please select either 'txt' or 'csv'.")
-    return concatenated_df
-
-
 def main():
     file_version = "Version 4"  # Kindly update this value after every version update
-
+    project_name = "Crash Recoder Tool - " + file_version
     logging.basicConfig(level=logging.DEBUG, filename="Log.log", filemode='a')
-    # st.image(r'.\brandfolder\Banner.png')
-    st.markdown(f"<div style='text-align: right;'>{file_version}</div>", unsafe_allow_html=True)  
+    st.image(r'https://github.com/aavrkai/Crash_Recoder_OR/blob/main/brandfolder/Banner.png?raw=True', use_column_width=True)
+    st.markdown(f"""<h1 style='text-align: center; font-size: 3em;'>{project_name}</h1>""", unsafe_allow_html=True)
     logging.info("Crash Recoder Tool, an Innovation Kitchen Product developed by Kittelson and Associates, Inc. (KAI)")
     logging.info("Contact: Azhagan (Azy) Avr  - aavr@kittelson.com")
     logging.info(dt.datetime.now())
-    time.sleep(2)
+    st.text("\n  \n")
+       
+    format_file = get_file_format()
+    if format_file:
+
+        uploaded_files = get_uploaded_files(format_file)
     
-    project_name = "Crash Recoder Tool - " + file_version
-    format_file = st.selectbox("Select the file format", ['txt', 'csv'])
-    uploaded_files = st.file_uploader(f"Upload {format_file} files", accept_multiple_files=True, type=[format_file])
-    
-    if uploaded_files:
-        raw_data = concatenate_files(uploaded_files, format_file)
-        
-        # Remove completely empty rows
-        raw_data.dropna(how='all', inplace=True)
-        
-        st.write("Concatenated Content:")
-        st.write(raw_data)
-        
-        
+        if uploaded_files:
+            raw_data = concatenate_files(uploaded_files, format_file)
 
-    dict_files = st.file_uploader(f"Upload Dictionary file", type=['xlsx'])
-
-    if dict_files:
-        translation_df = pd.read_excel(dict_files)
-        temp = translation_df.drop(columns='Values')  # droping the values column
-        cols = temp.columns.tolist()
-
-        raw_data.columns = cols    
-        st.write(raw_data.columns)
-
-    output_filename = st.text_input("Please enter the output filename: ")
-    if output_filename:
-        veh_code_seq = "0" # changing it to 0 as ODOT changed their format
-
-        output_filename1 = output_filename + "_Collision.csv"
-        output_filename2 = output_filename + "_Party.csv"
-        output_filename3 = output_filename + "_Visualizer.xlsx"
-
-        start_time = time.time()
-        st.text(str(round(time.time() - start_time, ndigits=2))+"s"+": Importing data translation table.....")
-        logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Importing data translation table.....")
-        translated_df = data_translation(raw_data,translation_df, start_time)
-        st.write(translated_df)
-
-        st.text(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating party level data.....")
-        logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating party level data.....")
-        pivot_col_id = participant_vehicle_id(translated_df, veh_code_seq)
-        st.write(pivot_col_id)
-
-        st.text(str(round(time.time() - start_time, ndigits=2))+"s"+": Creating new variables.....")
-        logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating new variables.....")
-        new_var_df = add_kai_variables(pivot_col_id) # Outputfilename 2 df
-        st.write(new_var_df)
-        # new_var_df = pd.read_csv("ML_output_kai.csv", low_memory=False)
-
-        st.text(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating collision level data.....")
-        logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating collision level data.....")
-        pivot_df = pivot_data(new_var_df) # Output filename 1 df
-        st.write(pivot_df)
-
-        st.text(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Exporting data to visualizer.....")
-        logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Exporting data to visualizer.....")
-        viz_file = st.file_uploader("Please upload the visualizer file: ")
-        if viz_file:
-            visualizer = excel_table_export(new_var_df, pivot_df, viz_file) #visualizer file
-            # ....................................................................................................................
-            logging.info(str(round((time.time() - start_time), ndigits=2)) + "s: Recoding complete.")
-            st.text(str(round((time.time() - start_time), ndigits=2)) + "s: Recoding complete.")
+            # Getting dictionary and adding header tot eh raw data
+            translation_df, raw_data_mod = get_dict_mod_raw_data(raw_data)
             
-            collision_otput = pivot_df.to_csv(index=False).encode('utf-8')
-            st.download_button(
-                                label="Download: " + output_filename1,
-                                data=collision_otput,
-                                file_name=output_filename1,
-                                mime='text/csv',
-                            )
-            
-            party_otput = new_var_df.to_csv(index=False).encode('utf-8')
-            st.download_button(
-                                label="Download: " + output_filename2,
-                                data=party_otput,
-                                file_name=output_filename2,
-                                mime='text/csv',
-                            )
-            
-            st.download_button(
-            label="Download: " + output_filename3,
-            data=visualizer,
-            file_name= output_filename3,
-            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            output_filename = get_output_file_name()
+
+            if output_filename:
+                
+                veh_code_seq = "0" # changing it to 0 as ODOT changed their format
+
+                output_filename1 = output_filename + "_Collision.csv"
+                output_filename2 = output_filename + "_Party.csv"
+                output_filename3 = output_filename + "_Visualizer.xlsx"
+
+                start_time = time.time()
+                st.text(str(round(time.time() - start_time, ndigits=2))+"s"+": Importing data translation table.....")
+                logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Importing data translation table.....")
+                translated_df = data_translation(raw_data_mod,translation_df, start_time)
+
+                st.text(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating party level data.....")
+                logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating party level data.....")
+                pivot_col_id = participant_vehicle_id(translated_df, veh_code_seq)
+
+                st.text(str(round(time.time() - start_time, ndigits=2))+"s"+": Creating new variables.....")
+                logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating new variables.....")
+                new_var_df = add_kai_variables(pivot_col_id) # Outputfilename 2 df
+
+                st.text(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating collision level data.....")
+                logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating collision level data.....")
+                pivot_df = pivot_data(new_var_df) # Output filename 1 df
+
+                st.text(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Exporting data to visualizer.....")
+                logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Exporting data to visualizer.....")
+                
+                visualizer = excel_table_export(new_var_df, pivot_df) #visualizer file
+
+                # ....................................................................................................................
+                logging.info(str(round((time.time() - start_time), ndigits=2)) + "s: Recoding complete.")
+                st.text(str(round((time.time() - start_time), ndigits=2)) + "s: Recoding complete.")
+                
+                collision_otput = pivot_df.to_csv(index=False).encode('utf-8')
+                st.download_button(
+                                    label="Download: " + output_filename1,
+                                    data=collision_otput,
+                                    file_name=output_filename1,
+                                    mime='text/csv',
                                 )
+                
+                party_otput = new_var_df.to_csv(index=False).encode('utf-8')
+                st.download_button(
+                                    label="Download: " + output_filename2,
+                                    data=party_otput,
+                                    file_name=output_filename2,
+                                    mime='text/csv',
+                                )
+                
+                st.download_button(
+                label="Download: " + output_filename3,
+                data=visualizer,
+                file_name= output_filename3,
+                mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                    )
+
 
 # Main
 if __name__ == '__main__':
     main()
- 
