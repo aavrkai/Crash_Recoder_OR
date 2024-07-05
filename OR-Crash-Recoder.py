@@ -178,7 +178,7 @@ def participant_vehicle_id(raw_df, veh_code):
 
         return raw_df
     except Exception as err:
-        # st.text(err)
+        st.text(err)
         # logging.error(err)
         sys.exit(1)
 
@@ -935,6 +935,7 @@ def add_kai_variables(raw_df):
         # raw_df.to_csv("ML_output_kai.csv", index=False)
 
     except Exception as err:
+        st.text(err)
         # logging.error(err)
         sys.exit(1)
     return raw_df
@@ -974,6 +975,7 @@ def pivot_data(raw_df):
         # raw_df.to_csv(path_out+output_filename1,index=False)
         return raw_df
     except Exception as err:
+        st.text(err)
         # logging.error(err)
         sys.exit(1)
 
@@ -1039,6 +1041,7 @@ def generate_column_names(party, collision):
         return df_col
 
     except Exception as err:
+        st.text(err)
         # logging.error(err)
         sys.exit(1)
 
@@ -1156,7 +1159,7 @@ def main():
     project_name = "OR Crash Recoder Tool - " + file_version
     # # logging.basicConfig(level=# logging.DEBUG, filename="Log.log", filemode='a')
     st.image(get_url("web_image"), use_column_width=True)
-    st.markdown(f"""<h1 style='text-align: center; font-size: 3em;'>{project_name}</h1>""", unsafe_allow_html=True)
+    st.markdown(f"""<h1 style='text-align: center; font-size: 2em;'>{project_name}</h1>""", unsafe_allow_html=True)
     # logging.info("Crash Recoder Tool, an Innovation Kitchen Product developed by Kittelson and Associates, Inc. (KAI)")
     # logging.info("Contact: Azhagan (Azy) Avr  - aavr@kittelson.com")
     # logging.info(dt.datetime.now())
