@@ -21,9 +21,13 @@ import io
 
 # logging.getLogger('PIL').setLevel(# logging.WARNING)
 
+# Initialize session state to manage download state
+if 'downloaded' not in st.session_state:
+    st.session_state.downloaded = False
 
-def get_file_format():
-    return st.selectbox("Select the file format", ["",'txt', 'csv'])
+
+def get_file_format(start_value):
+    return st.selectbox("Select the file format", [start_value,'txt', 'csv'])
 
 
 def get_uploaded_files(file):
@@ -1146,15 +1150,23 @@ def download_all_files(col_df, col_name, party_df, party_name, viz_buffer, viz_n
      # Seek to the start of the zip buffer
     zip_buffer.seek(0)
     
-    # Create the download button for the zip file
-    st.download_button(
-        label="Download All Files",
-        data=zip_buffer,
-        file_name=zip_name + ".zip",
-        mime='application/zip',
-    )
+    return zip_buffer
 
-def main():
+
+def handle_downloads (zip):
+    if zip:
+        # Create the download button for the zip file
+        st.download_button(
+            label="Download All Files",
+            data=zip,
+            file_name=output_filename + ".zip",
+            mime='application/zip',
+        )
+        st.session_state.downloaded = True
+    
+
+# Main
+if __name__ == '__main__':
     file_version = "Version 4"  # Kindly update this value after every version update
     project_name = "OR Crash Recoder Tool - " + file_version
     # # logging.basicConfig(level=# logging.DEBUG, filename="Log.log", filemode='a')
@@ -1164,56 +1176,57 @@ def main():
     # logging.info("Contact: Azhagan (Azy) Avr  - aavr@kittelson.com")
     # logging.info(dt.datetime.now())
     st.text("\n  \n")
-       
-    format_file = get_file_format()
-    if format_file:
+    if not st.session_state.downloaded:
+        format_file = get_file_format("")
+        if format_file:
 
-        uploaded_files = get_uploaded_files(format_file)
-    
-        if uploaded_files:
-            raw_data = concatenate_files(uploaded_files, format_file)
+            uploaded_files = get_uploaded_files(format_file)
+        
+            if uploaded_files:
+                raw_data = concatenate_files(uploaded_files, format_file)
 
-            # Getting dictionary and adding header tot eh raw data
-            translation_df, raw_data_mod = get_dict_mod_raw_data(raw_data)
-            
-            output_filename = get_output_file_name()
+                # Getting dictionary and adding header tot eh raw data
+                translation_df, raw_data_mod = get_dict_mod_raw_data(raw_data)
+                output_filename = get_output_file_name()
+                if output_filename:
+                    
+                    veh_code_seq = "0" # changing it to 0 as ODOT changed their format
 
-            if output_filename:
+                    output_filename1 = output_filename + "_Collision.csv"
+                    output_filename2 = output_filename + "_Party.csv"
+                    output_filename3 = output_filename + "_Visualizer.xlsx"
+
+                    start_time = time.time()
+                    st.text(str(round(time.time() - start_time, ndigits=2))+"s"+": Importing data translation table.....")
+                    # logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Importing data translation table.....")
+                    translated_df = data_translation(raw_data_mod,translation_df, start_time)
                 
-                veh_code_seq = "0" # changing it to 0 as ODOT changed their format
+                    st.text(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating party level data.....")
+                    # logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating party level data.....")
+                    pivot_col_id = participant_vehicle_id(translated_df, veh_code_seq)
 
-                output_filename1 = output_filename + "_Collision.csv"
-                output_filename2 = output_filename + "_Party.csv"
-                output_filename3 = output_filename + "_Visualizer.xlsx"
+                    st.text(str(round(time.time() - start_time, ndigits=2))+"s"+": Creating new variables.....")
+                    # logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating new variables.....")
+                    new_var_df = add_kai_variables(pivot_col_id) # Outputfilename 2 df
 
-                start_time = time.time()
-                st.text(str(round(time.time() - start_time, ndigits=2))+"s"+": Importing data translation table.....")
-                # logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Importing data translation table.....")
-                translated_df = data_translation(raw_data_mod,translation_df, start_time)
+                    st.text(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating collision level data.....")
+                    # logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating collision level data.....")
+                    pivot_df = pivot_data(new_var_df) # Output filename 1 df
 
-                st.text(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating party level data.....")
-                # logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating party level data.....")
-                pivot_col_id = participant_vehicle_id(translated_df, veh_code_seq)
+                    st.text(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Exporting data to visualizer.....")
+                    # logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Exporting data to visualizer.....")
+                    
+                    visualizer_buffer = excel_table_export(new_var_df, pivot_df) #visualizer file
 
-                st.text(str(round(time.time() - start_time, ndigits=2))+"s"+": Creating new variables.....")
-                # logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating new variables.....")
-                new_var_df = add_kai_variables(pivot_col_id) # Outputfilename 2 df
+                    # ....................................................................................................................
+                    # logging.info(str(round((time.time() - start_time), ndigits=2)) + "s: Recoding complete.")
+                    st.text(str(round((time.time() - start_time), ndigits=2)) + "s: Recoding complete.")
 
-                st.text(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating collision level data.....")
-                # logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Creating collision level data.....")
-                pivot_df = pivot_data(new_var_df) # Output filename 1 df
+                    zip = download_all_files(pivot_df, output_filename1, new_var_df, output_filename2, visualizer_buffer, output_filename3, output_filename)
+                    
+                    if not st.session_state.downloaded:
+                        handle_downloads(zip)
 
-                st.text(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Exporting data to visualizer.....")
-                # logging.info(str(round(time.time() - start_time, ndigits=2)) + "s" + ": Exporting data to visualizer.....")
-                
-                visualizer_buffer = excel_table_export(new_var_df, pivot_df) #visualizer file
-
-                # ....................................................................................................................
-                # logging.info(str(round((time.time() - start_time), ndigits=2)) + "s: Recoding complete.")
-                st.text(str(round((time.time() - start_time), ndigits=2)) + "s: Recoding complete.")
-
-                download_all_files(pivot_df, output_filename1, new_var_df, output_filename2, visualizer_buffer, output_filename3, output_filename)
-
-# Main
-if __name__ == '__main__':
-    main()
+    else:
+        time.sleep(2)
+        st.markdown(f"""<h5 style='text-align: center; font-size: 1.5em;'>{"Your download has started. Thank you for using the tool. Refresh the webpage to use the tool again."}</h5>""", unsafe_allow_html=True)
